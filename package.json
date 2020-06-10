@@ -1,0 +1,11 @@
+{
+  "name": "form-reactor",
+  "version": "1.0.0",
+  "description": "A React Form Helper meant to be used in Wordpress",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ragav Kumar",
+  "license": "ISC"
+}
