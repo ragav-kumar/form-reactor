@@ -15,8 +15,8 @@ class FormReactor {
 	/** @var self $instance */
 	private static $instance = null;
 
-	public $dir;
-	public $url;
+	public static $dir;
+	public static $url;
 
 	public static function init():self {
 		if (!self::$instance) {
@@ -26,8 +26,8 @@ class FormReactor {
 		
 	}
 	private function __construct() {
-		$this->dir = plugin_dir_path(__FILE__);
-		$this->url = plugin_dir_url(__FILE__);
+		self::$dir = plugin_dir_path(__FILE__);
+		self::$url = plugin_dir_url(__FILE__);
 
 		spl_autoload_register([$this, 'autoloader']);
 
@@ -40,18 +40,21 @@ class FormReactor {
 		add_action('admin_footer', [$this, 'modalRenderNode']);
 	}
 	/**
-	 * Load in all classes at the root of the inc directory.
+	 * Load in all classes in inc/Backend.
 	 * These classes should have a one-to-one correspondence with applications,
 	 * Serving as their backends
 	 *
 	 * @return void
 	 */
 	private function loadApps() {
-		$glob = glob($this->dir . 'inc' . DIRECTORY_SEPARATOR . "*.php");
+		$glob = glob(
+			self::$dir . 'inc' . DIRECTORY_SEPARATOR .
+			'Backend' . DIRECTORY_SEPARATOR ."*.php"
+		);
 		foreach ($glob as $file) {
 			$class = basename($file, '.php');
 			// Add Namespace prefix
-			$class = "\\" . self::BASE_NAMESPACE . "\\" . $class;
+			$class = "\\" . self::BASE_NAMESPACE . "\\Backend\\" . $class;
 			if (class_exists($class)) {
 				new $class();
 			}
@@ -63,15 +66,14 @@ class FormReactor {
 	 * @return void
 	 */
 	function enqueue() {
-		wp_enqueue_script('react');
 		// Load in a dummy script, and inject common variables through it
 		wp_register_script('form-reactor-dummy-script', "");
 		wp_enqueue_script('form-reactor-dummy-script');
 		wp_add_inline_script(
 			'form-reactor-dummy-script',
 			"window.formReactorData=" . json_encode([
-				'imgUrl'      => $this->url . "img/",
-				'apiUrl'      => rest_url("/" . self::REST_BASE . "/"),
+				'imgUrl'      => self::$url . "img/",
+				'apiUrl'      => self::REST_BASE,
 				'apiNonce'    => wp_create_nonce('wp_rest'),
 				'modalRootId' => "form-reactor-modal-root-node",
 			])
@@ -116,9 +118,9 @@ class FormReactor {
 	public static function reactSrc(string $filenameNoExt):string {
 		if (!self::$instance) self::init();
 
-		$path = self::$instance->dir . "js/$filenameNoExt.js";
+		$path = self::$dir . "js/$filenameNoExt.js";
 		if (file_exists($path)) {
-			return self::$instance->url . "js/$filenameNoExt.js";
+			return self::$url . "js/$filenameNoExt.js";
 		} else {
 			throw new \InvalidArgumentException("Missing Source file: $filenameNoExt.js");
 		}

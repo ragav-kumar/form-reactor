@@ -5,8 +5,9 @@
 .pnp.js
 
 # build
-/js/
-/vendor/
+/js
+/vendor
+/build
 
 #editor
 /.vscode
