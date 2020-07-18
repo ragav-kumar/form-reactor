@@ -20,10 +20,10 @@ class FormReactor {
 	public const COMMON_DATA_VAR = "formReactorData";
 	public const MODAL_ROOT      = "form-reactor-modal-root-node";
 	
-	private static ?self $instance = null;
+	private static $instance = null;
 
-	public static string $dir;
-	public static string $url;
+	public static $dir;
+	public static $url;
 
 	public static function init():self {
 		if (!isset(self::$instance)) {
@@ -66,6 +66,7 @@ class FormReactor {
 				new $class();
 			}
 		}
+
 	}
 	/**
 	 * Load in Styles and script for use in application
@@ -112,7 +113,7 @@ class FormReactor {
 		}
 		$relativeClassName = substr($class, $len);
 		// Perform substitutions
-		$file = $this->dir . 'inc' . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $relativeClassName) . '.php';
+		$file = self::$dir . 'inc' . str_replace('\\', DIRECTORY_SEPARATOR, $relativeClassName) . '.php';
 
 		if (file_exists($file)) {
 			require($file);

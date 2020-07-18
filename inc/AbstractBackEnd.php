@@ -11,9 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  * be in FormReactor\Backend namespace in order to be autoloaded
  */
 abstract class AbstractBackEnd {
-	private string $handle;
-	private string $entry;
-	private ?string $version;
+	/** @var string $handle */
+	private $handle;
+	/** @var string $entry */
+	private $entry;
+	/** @var string|null $version */
+	private $version;
 
 	/**
 	 * Sets up hooks that most forms would need, and takes care of enqueuing JS.
