@@ -9,17 +9,24 @@ Author: Ragav Kumar
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 add_action('init', ['FormReactor', 'init'], 0);
-class FormReactor {
-	public const REST_BASE = "formreactor/v1";
-	public const BASE_NAMESPACE = "FormReactor";
-	/** @var self $instance */
-	private static $instance = null;
 
-	public static $dir;
-	public static $url;
+/**
+ * Initial entrypoint into the plugin. Also preps any common data (REST API stuff,
+ * modal root, etc)
+ */
+class FormReactor {
+	public const REST_BASE       = "formreactor/v1";
+	public const BASE_NAMESPACE  = "FormReactor";
+	public const COMMON_DATA_VAR = "formReactorData";
+	public const MODAL_ROOT      = "form-reactor-modal-root-node";
+	
+	private static ?self $instance = null;
+
+	public static string $dir;
+	public static string $url;
 
 	public static function init():self {
-		if (!self::$instance) {
+		if (!isset(self::$instance)) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -71,11 +78,13 @@ class FormReactor {
 		wp_enqueue_script('form-reactor-dummy-script');
 		wp_add_inline_script(
 			'form-reactor-dummy-script',
-			"window.formReactorData=" . json_encode([
-				'imgUrl'      => self::$url . "img/",
-				'apiUrl'      => self::REST_BASE,
-				'apiNonce'    => wp_create_nonce('wp_rest'),
-				'modalRootId' => "form-reactor-modal-root-node",
+			"window." . self::COMMON_DATA_VAR . "=" . json_encode([
+				'imgUrl'     => self::$url . "img/",
+				'apiUrl'     => self::REST_BASE . "/",
+				'fullApiUrl' => rest_url(self::REST_BASE),
+				'apiNonce'   => wp_create_nonce('wp_rest'),
+				'user'       => get_current_user_id(),
+				'modalRoot'  => self::MODAL_ROOT,
 			])
 		);
 	}
@@ -86,7 +95,7 @@ class FormReactor {
 	 */
 	function modalRenderNode() {
 		?>
-		<div id="form-reactor-modal-root-node"></div>
+		<div id="<?= self::MODAL_ROOT ?>"></div>
 		<?php
 	}
 	/**
@@ -107,22 +116,6 @@ class FormReactor {
 
 		if (file_exists($file)) {
 			require($file);
-		}
-	}
-	/**
-	 * Quickly generates to one of the webpack endpoints
-	 * @param string $filenameNoExt 
-	 * @return string url to file
-	 * @throws InvalidArgumentException 
-	 */
-	public static function reactSrc(string $filenameNoExt):string {
-		if (!self::$instance) self::init();
-
-		$path = self::$dir . "js/$filenameNoExt.js";
-		if (file_exists($path)) {
-			return self::$url . "js/$filenameNoExt.js";
-		} else {
-			throw new \InvalidArgumentException("Missing Source file: $filenameNoExt.js");
 		}
 	}
 }

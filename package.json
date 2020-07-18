@@ -29,6 +29,7 @@
 				"@types/yup": "^0.29.3",
 				"@wordpress/api-fetch": "^3.17.0",
 				"@wordpress/babel-plugin-import-jsx-pragma": "^2.6.0",
+				"axios": "^0.19.2",
 				"formik": "^2.1.4",
 				"google-map-react": "^1.1.7",
 				"just-debounce-it": "^1.1.0",

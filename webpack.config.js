@@ -52,5 +52,10 @@ module.exports = (env, options) => ({
 				loader: "source-map-loader"
 			}
 		]
+	},
+	performance: {
+		...defaults.performance,
+		maxAssetSize: 1048576,
+		maxEntrypointSize: 1048576
 	}
 });

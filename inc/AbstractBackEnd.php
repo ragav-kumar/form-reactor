@@ -6,14 +6,27 @@ use FormReactor;
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
+/**
+ * All Backends should inherit from this class. Note that a backend should
+ * be in FormReactor\Backend namespace in order to be autoloaded
+ */
 abstract class AbstractBackEnd {
-	/** @var string */
-	private $handle;
-	/** @var string */
-	private $entry;
-	/** @var string|null */
-	private $version;
+	private string $handle;
+	private string $entry;
+	private ?string $version;
 
+	/**
+	 * Sets up hooks that most forms would need, and takes care of enqueuing JS.
+	 * Note that while $shortcode, $handle, and $entry have default values
+	 * in order to be compatible with parameter-less constructors in child classes,
+	 * they must be specified when parent::__construct() is called.
+	 * @param string $shortcode Shortcode name (for use in WP admin view, for ex)
+	 * @param string $handle Script handle.
+	 * @param string $entry Filename (no extension) of compiled entrypoint
+	 * @param string|null $version Version Number. If left null, will use time(), for cache busting purposes during development
+	 * @return void 
+	 * @throws \BadMethodCallException If $shortcode, $handle, or $entry are not specified.
+	 */
 	function __construct(string $shortcode=null, string $handle=null, string $entry=null, string $version=null) {
 		if (!$shortcode || !$handle || !$entry) {
 			throw new \BadMethodCallException("Must specify Shortcode, Script handle, and entrypoint");
@@ -25,6 +38,7 @@ abstract class AbstractBackEnd {
 		add_action("wp_enqueue_scripts", [$this, 'enqueue']);
 		add_shortcode($shortcode, [$this, 'shortcode']);
 	}
+	//--------------------------------------------------------------------------
 	/**
 	 * Enqueue the any scripts or styles needed for this app, including the 
 	 * core react source file
@@ -42,23 +56,6 @@ abstract class AbstractBackEnd {
 			['wp-element', 'wp-api-fetch'],
 			$this->version ?? time()
 		);
-	}
-	/**
-	 * Helper to enqueue Entrypoint
-	 * @param string $handle 
-	 * @param string $name 
-	 * @param string $version Specify version
-	 * @return void 
-	 * @throws InvalidArgumentException 
-	 */
-	protected function enqueueEntrypoint(string $handle, string $name, string $version=null) {
-		$path = FormReactor::$dir . "js/$name.js";
-		if (file_exists($path)) {
-			$path = FormReactor::$url . "js/$name.js";
-		} else {
-			throw new \InvalidArgumentException("Missing Source file: $name.js");
-		}
-		wp_register_script( $handle, $path, ['wp-element', 'wp-api-fetch'], $version ?? time());
 	}
 	//--------------------------------------------------------------------------
 	/**
@@ -88,6 +85,25 @@ abstract class AbstractBackEnd {
 	protected function jsRootNode(string $id, bool $useClass = false):string {
 		$type = $useClass ? "class" : "id";
 		return "<div {$type}=\"{$id}\">Loading...</div>";
+	}
+	//--------------------------------------------------------------------------
+	/**
+	 * Create a global variable that will hold instance-specific data.
+	 * This method will also enqueue the script, so call only if script
+	 * will be needed.
+	 * @param string $handle Script handle
+	 * @param string $varName Instance variable name. Should be unique
+	 * @param array $data Any data to be passed to react app
+	 * @return void 
+	 */
+	protected function loadScript(string $handle, string $varName, array $data) {
+		wp_add_inline_script(
+			$handle,
+			"window.{$varName}=" . json_encode($data),
+			'before'
+		);
+		// Now that we know we need the js, we can actually enqueue it
+		wp_enqueue_script($handle);
 	}
 	//--------------------------------------------------------------------------
 	/**
